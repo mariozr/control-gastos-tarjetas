@@ -1,0 +1,7 @@
+pass: 9KFTIFev8KylqWgN
+
+Project URL: https://kkguaxgjvjcsbnleekdx.supabase.co
+
+Publishable key: sb_publishable_CZrfZMaGEy_qCPEumZ3SnA_FLAdReSb
+
+anon public: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrZ3VheGdqdmpjc2JubGVla2R4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTE5MjAsImV4cCI6MjA5NjEyNzkyMH0.SKQpZDk_ijeGBbOIksbHShZTVFL-dRT205hfOEH0Ssw
