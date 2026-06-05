@@ -111,7 +111,7 @@ export default function Sidebar({
           {!cerrado && (
             <p className="text-xs text-gray-400 text-center">
               Versión 2.0
-              <br />© 2024 ControlGastos
+              <br />© 2026 MarioyDalyApps ♥️
             </p>
           )}
           {cerrado && <p className="text-xs text-gray-400">v2.0</p>}
