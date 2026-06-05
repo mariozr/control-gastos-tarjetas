@@ -164,7 +164,7 @@ export default function ResumenCreditos() {
         {compras.map((compra) => (
           <div
             key={compra.id}
-            className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+            className="p-4 hover:bg-gray-50 dark:hover:bg-blue-950 transition"
           >
             {/* Cabecera de la compra - siempre visible */}
             <div

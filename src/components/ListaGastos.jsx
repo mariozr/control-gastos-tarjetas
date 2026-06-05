@@ -19,6 +19,8 @@ export default function ListaGastos({
   const [filtroFormaPago, setFiltroFormaPago] = useState("todas");
   const [filtroTiempo, setFiltroTiempo] = useState("todos");
   const [filtroTarjeta, setFiltroTarjeta] = useState("todas");
+  const [filtroPeriodo, setFiltroPeriodo] = useState("todos");
+  const [periodosDisponibles, setPeriodosDisponibles] = useState([]);
   const [fechasDisponibles, setFechasDisponibles] = useState({
     semanas: [],
     meses: [],
@@ -317,6 +319,17 @@ export default function ListaGastos({
     setFechasDisponibles(fechas);
 
     setLoading(false);
+  };
+
+  /* Función para obtener periodos únicos de las cuotas */
+  const obtenerPeriodosUnicos = (gastos) => {
+    const periodos = new Set();
+    gastos.forEach((gasto) => {
+      if (gasto.periodo_cierre) {
+        periodos.add(gasto.periodo_cierre);
+      }
+    });
+    return Array.from(periodos).sort().reverse();
   };
 
   useEffect(() => {
@@ -632,6 +645,27 @@ export default function ListaGastos({
                 {tarjetasDisponibles.map((tarjeta) => (
                   <option key={tarjeta.id} value={tarjeta.id}>
                     {tarjeta.nombre} •••• {tarjeta.ultimos_digitos}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Filtro por período según fecha de cierre */}
+          {periodosDisponibles.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
+                📅 Período de cierre
+              </label>
+              <select
+                value={filtroPeriodo}
+                onChange={(e) => setFiltroPeriodo(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md"
+              >
+                <option value="todos">Todos los períodos</option>
+                {periodosDisponibles.map((periodo) => (
+                  <option key={periodo} value={periodo}>
+                    {periodo}
                   </option>
                 ))}
               </select>

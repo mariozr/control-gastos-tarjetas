@@ -93,6 +93,25 @@ export default function ResumenTarjetas() {
     setLoading(false);
   };
 
+  const getPeriodoActual = (diaCierre) => {
+    const hoy = new Date();
+    const diaActual = hoy.getDate();
+
+    if (diaActual >= diaCierre) {
+      // Estamos en un nuevo período que cierra el próximo mes
+      let mesCierre = hoy.getMonth() + 2;
+      let añoCierre = hoy.getFullYear();
+      if (mesCierre > 12) {
+        mesCierre = 1;
+        añoCierre++;
+      }
+      return `${añoCierre}-${String(mesCierre).padStart(2, "0")}`;
+    } else {
+      // El período actual cierra este mes
+      return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+    }
+  };
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -225,6 +244,13 @@ export default function ResumenTarjetas() {
                       {formatearMonto(tarjeta.totalProximo)}
                     </span>
                   </div>
+                </div>
+              )}
+
+              {/* Muestra el período actual */}
+              {tarjeta.dia_cierre && (
+                <div className="mt-2 text-xs text-gray-500">
+                  📆 Período actual: {getPeriodoActual(tarjeta.dia_cierre)}
                 </div>
               )}
 

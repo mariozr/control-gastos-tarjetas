@@ -1,7 +1,15 @@
-// components/FormularioTarjetaCredito.jsx
+// components/FormularioTarjetaCredito.jsx (con la corrección de fechas)
+
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { formatearMonto } from "../utils/formatearMonto";
+import {
+  calcularPeriodoTarjeta,
+  calcularFechasCuotasConCierre,
+  formatearFechaLocal,
+  dateToString,
+  obtenerDia,
+} from "../utils/fechas";
 
 export default function FormularioTarjetaCredito({
   categorias,
@@ -12,12 +20,13 @@ export default function FormularioTarjetaCredito({
 }) {
   const [tarjetas, setTarjetas] = useState([]);
   const [tarjetaSeleccionada, setTarjetaSeleccionada] = useState("");
+  const [tarjetaInfo, setTarjetaInfo] = useState(null);
   const [formData, setFormData] = useState({
     descripcion: "",
     montoTotal: "",
     categoria: "",
     forma_pago: "Tarjeta de Crédito",
-    fechaCompra: new Date().toISOString().split("T")[0],
+    fechaCompra: new Date().toISOString().split("T")[0], // Formato YYYY-MM-DD
     cantidadCuotas: 1,
     cuotaInicial: 1,
     tieneInteres: false,
@@ -28,11 +37,26 @@ export default function FormularioTarjetaCredito({
   const [loading, setLoading] = useState(false);
   const [loadingTarjetas, setLoadingTarjetas] = useState(true);
   const [mostrarDetalleCuotas, setMostrarDetalleCuotas] = useState(false);
+  const [infoPeriodo, setInfoPeriodo] = useState(null);
 
   // Cargar tarjetas disponibles
   useEffect(() => {
     cargarTarjetas();
   }, []);
+
+  // Actualizar info del período cuando cambia la fecha o la tarjeta
+  useEffect(() => {
+    if (tarjetaInfo && tarjetaInfo.dia_cierre && formData.fechaCompra) {
+      const periodo = calcularPeriodoTarjeta(
+        formData.fechaCompra,
+        tarjetaInfo.dia_cierre,
+      );
+      setInfoPeriodo(periodo);
+      console.log("Período calculado:", periodo); // Para debug
+    } else {
+      setInfoPeriodo(null);
+    }
+  }, [formData.fechaCompra, tarjetaInfo]);
 
   const cargarTarjetas = async () => {
     setLoadingTarjetas(true);
@@ -45,16 +69,25 @@ export default function FormularioTarjetaCredito({
 
     if (!error && data) {
       setTarjetas(data);
-      // Seleccionar tarjeta favorita o la primera
       const favorita = data.find((t) => t.favorita);
       if (favorita) {
         setTarjetaSeleccionada(favorita.id.toString());
+        setTarjetaInfo(favorita);
       } else if (data.length > 0) {
         setTarjetaSeleccionada(data[0].id.toString());
+        setTarjetaInfo(data[0]);
       }
     }
     setLoadingTarjetas(false);
   };
+
+  // Actualizar info de tarjeta cuando cambia la selección
+  useEffect(() => {
+    const tarjeta = tarjetas.find(
+      (t) => t.id.toString() === tarjetaSeleccionada,
+    );
+    setTarjetaInfo(tarjeta || null);
+  }, [tarjetaSeleccionada, tarjetas]);
 
   // Calcular monto total con intereses
   const calcularMontoConInteres = () => {
@@ -86,27 +119,41 @@ export default function FormularioTarjetaCredito({
     return totalConInteres - totalOriginal;
   };
 
-  // Generar fechas de las cuotas
+  // Generar fechas de las cuotas usando el día de cierre
   const generarFechasCuotas = () => {
-    const fechaCompra = new Date(formData.fechaCompra);
-    const cuotas = parseInt(formData.cantidadCuotas);
-    const cuotaInicial = parseInt(formData.cuotaInicial);
-    const fechas = [];
+    if (!tarjetaInfo || !tarjetaInfo.dia_cierre) {
+      // Fallback: método anterior si no hay día de cierre
+      const [year, month, day] = formData.fechaCompra.split("-").map(Number);
+      const fechaCompra = new Date(year, month - 1, day);
+      const cuotas = parseInt(formData.cantidadCuotas);
+      const cuotaInicial = parseInt(formData.cuotaInicial);
+      const fechas = [];
 
-    let fechaPago = new Date(fechaCompra);
-    fechaPago.setMonth(fechaPago.getMonth() + 1);
-    fechaPago.setDate(1);
-
-    for (let i = cuotaInicial; i <= cuotas; i++) {
-      fechas.push({
-        numero: i,
-        fecha: new Date(fechaPago),
-        monto: calcularMontoCuota(),
-      });
+      let fechaPago = new Date(fechaCompra);
       fechaPago.setMonth(fechaPago.getMonth() + 1);
+      fechaPago.setDate(1);
+
+      for (let i = cuotaInicial; i <= cuotas; i++) {
+        fechas.push({
+          numero: i,
+          fecha: new Date(fechaPago),
+          fechaStr: dateToString(fechaPago),
+          periodo: `${fechaPago.getFullYear()}-${String(fechaPago.getMonth() + 1).padStart(2, "0")}`,
+        });
+        fechaPago.setMonth(fechaPago.getMonth() + 1);
+      }
+      return fechas;
     }
 
-    return fechas;
+    // Usar el nuevo cálculo con día de cierre
+    return calcularFechasCuotasConCierre(
+      {
+        fechaCompra: formData.fechaCompra,
+        cantidadCuotas: parseInt(formData.cantidadCuotas),
+        cuotaInicial: parseInt(formData.cuotaInicial),
+      },
+      tarjetaInfo,
+    );
   };
 
   const handleChange = (e) => {
@@ -160,6 +207,18 @@ export default function FormularioTarjetaCredito({
       ? parseInt(tarjetaSeleccionada)
       : null;
 
+    // Calcular período de cierre para la compra
+    let periodoCierre = null;
+    let fechaCierreCalculada = null;
+    if (tarjetaInfo && tarjetaInfo.dia_cierre) {
+      const periodo = calcularPeriodoTarjeta(
+        formData.fechaCompra,
+        tarjetaInfo.dia_cierre,
+      );
+      periodoCierre = periodo.periodoCierre;
+      fechaCierreCalculada = periodo.fechaCierreReal;
+    }
+
     // 1. Crear el registro principal de la compra
     const { data: compraPrincipal, error: errorPrincipal } = await supabase
       .from("gastos")
@@ -182,6 +241,8 @@ export default function FormularioTarjetaCredito({
             ? parseFloat(formData.valorInteres)
             : null,
           tarjeta_credito_id: tarjetaId,
+          periodo_cierre: periodoCierre,
+          fecha_cierre_calculada: fechaCierreCalculada,
         },
       ])
       .select();
@@ -196,12 +257,12 @@ export default function FormularioTarjetaCredito({
 
     // 2. Crear los registros individuales de cada cuota
     const cuotasPromises = fechasCuotas.map(async (cuota) => {
-      const fechaPago = cuota.fecha.toISOString().split("T")[0];
+      const fechaPago = cuota.fechaStr || dateToString(cuota.fecha);
 
       return supabase.from("gastos").insert([
         {
           descripcion: `${formData.descripcion} (Cuota ${cuota.numero}/${cantidadCuotas})${formData.tieneInteres ? " c/interés" : ""}`,
-          monto: cuota.monto,
+          monto: cuota.monto || montoCuota,
           categoria: formData.categoria,
           forma_pago: formData.forma_pago,
           fecha: fechaPago,
@@ -209,11 +270,13 @@ export default function FormularioTarjetaCredito({
           tipo_gasto: "credito_cuota",
           cuota_actual: cuota.numero,
           total_cuotas: cantidadCuotas,
-          monto_cuota: cuota.monto,
+          monto_cuota: montoCuota,
           gasto_original_id: compraId,
           fecha_compra: formData.fechaCompra,
           tiene_interes: formData.tieneInteres,
           tarjeta_credito_id: tarjetaId,
+          periodo_cierre: cuota.periodo,
+          periodo_vencimiento: cuota.periodo,
         },
       ]);
     });
@@ -270,9 +333,11 @@ export default function FormularioTarjetaCredito({
   const interesTotal = calcularInteresTotal();
   const montoCuota = calcularMontoCuota();
   const fechasCuotas = generarFechasCuotas();
-  const tarjetaInfo = tarjetas.find(
-    (t) => t.id.toString() === tarjetaSeleccionada,
-  );
+
+  // Obtener el día de la fecha seleccionada para mostrar correctamente
+  const diaSeleccionado = formData.fechaCompra
+    ? obtenerDia(formData.fechaCompra)
+    : null;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -328,7 +393,7 @@ export default function FormularioTarjetaCredito({
               <option key={tarjeta.id} value={tarjeta.id}>
                 {tarjeta.nombre} •••• {tarjeta.ultimos_digitos}
                 {tarjeta.favorita && " ⭐"}
-                {tarjeta.entidades?.nombre && ` (${tarjeta.entidades.nombre})`}
+                {tarjeta.dia_cierre && ` (Cierra: ${tarjeta.dia_cierre})`}
               </option>
             ))}
           </select>
@@ -342,9 +407,63 @@ export default function FormularioTarjetaCredito({
                 Saldo actual: {formatearMonto(tarjetaInfo.saldo_actual || 0)}
                 {tarjetaInfo.limite &&
                   ` / Límite: ${formatearMonto(tarjetaInfo.limite)}`}
+                {tarjetaInfo.dia_cierre &&
+                  ` | Cierra: ${tarjetaInfo.dia_cierre}`}
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Información del período de cierre - VERSIÓN CORREGIDA */}
+      {infoPeriodo && tarjetaInfo && tarjetaInfo.dia_cierre && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+          <p className="text-sm font-semibold text-blue-800 dark:text-blue-300 mb-1">
+            📅 Información de cierre
+          </p>
+          <div className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
+            <p>
+              🔹 Compra realizada el:{" "}
+              {formatearFechaLocal(formData.fechaCompra)}
+            </p>
+            <p>🔹 Día de cierre de la tarjeta: {tarjetaInfo.dia_cierre}</p>
+
+            {infoPeriodo.esDespuesCierre ? (
+              <>
+                <p className="text-yellow-600 dark:text-yellow-400">
+                  ⚠️ La compra fue DESPUÉS del cierre ({infoPeriodo.diaCompra}{" "}
+                  &gt; {infoPeriodo.diaCierre})
+                </p>
+                <p>
+                  🔹 Entra en el resumen que cierra el:{" "}
+                  {infoPeriodo.fechaCierreReal}
+                </p>
+                <p>
+                  🔹 El resumen vence el: {infoPeriodo.fechaVencimientoReal}
+                </p>
+                <p className="text-green-600 dark:text-green-400 font-semibold">
+                  ✅ Primera cuota se paga en: {infoPeriodo.primeraCuotaPeriodo}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-green-600 dark:text-green-400">
+                  ✓ La compra fue ANTES o IGUAL al cierre (
+                  {infoPeriodo.diaCompra} ≤ {infoPeriodo.diaCierre})
+                </p>
+                <p>
+                  🔹 Entra en el resumen que cierra el:{" "}
+                  {infoPeriodo.fechaCierreReal}
+                </p>
+                <p>
+                  🔹 El resumen vence el: {infoPeriodo.fechaVencimientoReal}
+                </p>
+                <p className="text-green-600 dark:text-green-400 font-semibold">
+                  ✅ Primera cuota se paga en: {infoPeriodo.primeraCuotaPeriodo}
+                </p>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -489,7 +608,8 @@ export default function FormularioTarjetaCredito({
         />
         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
           ℹ️ El total de la compra NO se sumará a los gastos de este mes. Solo
-          se sumarán las cuotas en sus meses correspondientes.
+          se sumarán las cuotas en sus meses correspondientes según el cierre de
+          la tarjeta.
         </p>
       </div>
 
@@ -588,7 +708,7 @@ export default function FormularioTarjetaCredito({
                       </span>
                     </div>
                     <span className="font-semibold text-blue-600 dark:text-blue-400">
-                      {formatearMonto(cuota.monto)}
+                      {formatearMonto(cuota.monto || montoCuota)}
                     </span>
                   </div>
                 ))}
