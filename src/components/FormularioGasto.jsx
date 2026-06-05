@@ -42,6 +42,21 @@ export default function FormularioGasto({
   const [colorNuevaFormaPago, setColorNuevaFormaPago] = useState("#10B981");
   const [mostrarInputNueva, setMostrarInputNueva] = useState(false);
   const [mostrarInputNuevaPago, setMostrarInputNuevaPago] = useState(false);
+  const [tarjetas, setTarjetas] = useState([]);
+  const [mostrarSelectorTarjeta, setMostrarSelectorTarjeta] = useState(false);
+
+  // Función para cargar tarjetas
+  const cargarTarjetasParaGastoSimple = async () => {
+    const { data, error } = await supabase
+      .from("tarjetas_credito")
+      .select("id, nombre, ultimos_digitos, color")
+      .eq("activa", true)
+      .order("favorita", { ascending: false });
+
+    if (!error && data) {
+      setTarjetas(data);
+    }
+  };
 
   const cargarCategorias = async () => {
     try {
@@ -129,7 +144,11 @@ export default function FormularioGasto({
   };
 
   useEffect(() => {
-    Promise.all([cargarCategorias(), cargarFormasPago()]);
+    Promise.all([
+      cargarCategorias(),
+      cargarFormasPago(),
+      cargarTarjetasParaGastoSimple(),
+    ]);
   }, []);
 
   const handleChange = (e) => {
@@ -230,6 +249,21 @@ export default function FormularioGasto({
       setLoading(false);
       return;
     }
+
+    const gastoData = {
+      descripcion: formData.descripcion,
+      monto: parseFloat(formData.monto),
+      categoria: formData.categoria,
+      forma_pago: formData.forma_pago,
+      fecha: formData.fecha,
+      es_cuota: false,
+      tipo_gasto: "simple",
+      tarjeta_credito_id:
+        formData.forma_pago === "Tarjeta de Crédito" &&
+        formData.tarjeta_credito_id
+          ? parseInt(formData.tarjeta_credito_id)
+          : null,
+    };
 
     const { data, error } = await supabase
       .from("gastos")
@@ -534,6 +568,30 @@ export default function FormularioGasto({
               </div>
             )}
           </div>
+
+          {/* Seleccionar tarjeta de crédito */}
+          {formData.forma_pago === "Tarjeta de Crédito" &&
+            tarjetas.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">
+                  Seleccionar tarjeta
+                </label>
+                <select
+                  name="tarjeta_credito_id"
+                  value={formData.tarjeta_credito_id || ""}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Seleccionar tarjeta</option>
+                  {tarjetas.map((tarjeta) => (
+                    <option key={tarjeta.id} value={tarjeta.id}>
+                      {tarjeta.nombre} •••• {tarjeta.ultimos_digitos}
+                      {tarjeta.favorita && " ⭐"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-400">
