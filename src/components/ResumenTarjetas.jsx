@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { formatearMonto } from "../utils/formatearMonto";
+import GestionTarjetas from "./GestionTarjetas";
 
 export default function ResumenTarjetas() {
   const [tarjetas, setTarjetas] = useState([]);
@@ -268,6 +269,12 @@ export default function ResumenTarjetas() {
             </div>
           </div>
         ))}
+      </div>
+      <div className="mt-4">
+        <hr />
+      </div>
+      <div className="mt-4">
+        <GestionTarjetas />
       </div>
     </div>
   );

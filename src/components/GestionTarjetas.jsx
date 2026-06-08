@@ -101,7 +101,7 @@ export default function GestionTarjetas({
     if (error) {
       onError("Error al guardar tarjeta: " + error.message);
     } else {
-      onSuccess(editandoTarjeta ? "Tarjeta actualizada" : "Tarjeta agregada");
+      alert(editandoTarjeta ? "Tarjeta actualizada" : "Tarjeta agregada");
       await cargarTarjetas();
       setMostrarModal(false);
       resetForm();
@@ -169,7 +169,7 @@ export default function GestionTarjetas({
         }}
         className="text-sm w-full bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700"
       >
-        + Gestionar Tarjetas
+        + Agregar Tarjeta
       </button>
 
       {/* Lista de tarjetas existentes */}

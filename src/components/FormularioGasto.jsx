@@ -614,18 +614,6 @@ export default function FormularioGasto({
           >
             {loading ? "Agregando..." : "Agregar Gasto"}
           </button>
-
-          {/* NUEVO: Botón para gestionar tarjetas */}
-          <div>
-            <GestionTarjetas
-              onTarjetaCambiada={() => {
-                // Recargar lista de tarjetas después de agregar
-                console.log("Tarjetas actualizadas");
-              }}
-              onError={onError}
-              onSuccess={onSuccess}
-            />
-          </div>
         </form>
       )}
 
