@@ -327,7 +327,7 @@ export default function FormularioGasto({
               : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           }`}
         >
-          💰 Gasto Simple
+          Gasto Simple
         </button>
         <button
           onClick={() => setTipoGasto("credito")}
@@ -337,7 +337,7 @@ export default function FormularioGasto({
               : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           }`}
         >
-          💳 Tarjeta de Crédito (Cuotas)
+          Tarjeta de Crédito (Cuotas)
         </button>
       </div>
 

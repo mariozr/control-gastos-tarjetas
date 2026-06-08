@@ -34,7 +34,7 @@ export default function MobileNav({
         {/* Header mobile */}
         <div className="p-4 border-b border-gray-700 flex justify-between items-center">
           <div>
-            <h1 className="text-xl font-bold">💰 ControlGastos</h1>
+            <h1 className="text-xl font-bold">ControlGastos</h1>
             <p className="text-xs text-gray-400">Gestión financiera</p>
           </div>
           <button

@@ -102,7 +102,7 @@ export default function CuotasPendientes({ onError }) {
           return (
             <div
               key={cuota.id}
-              className="p-4 hover:bg-gray-50 dark:hover:bg-gray-750 transition"
+              className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
