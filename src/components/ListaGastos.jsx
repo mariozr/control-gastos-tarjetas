@@ -12,6 +12,8 @@ export default function ListaGastos({
   const [gastos, setGastos] = useState([]);
   const [total, setTotal] = useState(0);
   const [totalMensual, setTotalMensual] = useState(0);
+  const [totalConsumo, setTotalConsumo] = useState(0);
+  const [totalConsumoMensual, setTotalConsumoMensual] = useState(0);
   const [mostrarTotalMensual, setMostrarTotalMensual] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busquedaTexto, setBusquedaTexto] = useState("");
@@ -90,6 +92,12 @@ export default function ListaGastos({
   const debeSumarseAlTotal = (gasto) => {
     return (
       gasto.tipo_gasto === "simple" || gasto.tipo_gasto === "credito_cuota"
+    );
+  };
+
+  const debeSumarseAlTotalConsumo = (gasto) => {
+    return (
+      gasto.tipo_gasto === "simple" || gasto.tipo_gasto === "credito_compra"
     );
   };
 
@@ -312,6 +320,30 @@ export default function ListaGastos({
     );
     setTotalMensual(sumaMensual);
 
+    // Calcular totales de consumo
+    let gastosParaTotalConsumo = gastosFiltradosPorTiempo.filter((g) =>
+      debeSumarseAlTotalConsumo(g),
+    );
+    const sumaTotalConsumo = gastosParaTotalConsumo.reduce(
+      (acc, gasto) => acc + gasto.monto,
+      0,
+    );
+
+    const gastosMesActualConsumo = todosLosGastos.filter((gasto) => {
+      const fechaGasto = gasto.fecha;
+      const añoGasto = fechaGasto.substring(0, 4);
+      const mesGasto = fechaGasto.substring(5, 7);
+      return (
+        `${añoGasto}-${mesGasto}` === mesActual && debeSumarseAlTotalConsumo(gasto)
+      );
+    });
+    const sumaMensualConsumo = gastosMesActualConsumo.reduce(
+      (acc, gasto) => acc + gasto.monto,
+      0,
+    );
+    setTotalConsumoMensual(sumaMensualConsumo);
+    setTotalConsumo(sumaTotalConsumo);
+
     setTotal(sumaTotal);
     setGastos(gastosFiltradosPorTiempo);
 
@@ -492,21 +524,35 @@ export default function ListaGastos({
     <>
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-colors duration-200">
         <div className="mb-4">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-4">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
               Gastos
             </h2>
-            <div className="text-right">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {filtroTiempo === "todos"
-                  ? "Total del mes (solo pagos reales)"
-                  : "Total (filtro aplicado)"}
-              </p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {formatearMonto(
-                  filtroTiempo === "todos" ? totalMensual : total,
-                )}
-              </p>
+            <div className="flex flex-wrap md:flex-nowrap gap-6 text-right justify-end w-full md:w-auto">
+              <div className="border-r border-gray-200 dark:border-gray-700 pr-6 last:border-0 last:pr-0">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  {filtroTiempo === "todos"
+                    ? "Total del mes (pagos reales)"
+                    : "Total real (filtro)"}
+                </p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  {formatearMonto(
+                    filtroTiempo === "todos" ? totalMensual : total,
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 font-medium">
+                  {filtroTiempo === "todos"
+                    ? "Total consumido (sin cuotas anter.)"
+                    : "Total consumido (filtro)"}
+                </p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {formatearMonto(
+                    filtroTiempo === "todos" ? totalConsumoMensual : totalConsumo,
+                  )}
+                </p>
+              </div>
             </div>
           </div>
           <div className="mt-3 flex justify-end">
