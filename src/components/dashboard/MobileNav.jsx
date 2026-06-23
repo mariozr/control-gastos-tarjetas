@@ -73,7 +73,7 @@ export default function MobileNav({
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
           <p className="text-xs text-gray-400 text-center">
             Versión 2.0
-            <br />© 2024 MarioyDalyApps ♥️
+            <br />© 2026 MarioyDalyApps ♥️
           </p>
         </div>
       </div>
