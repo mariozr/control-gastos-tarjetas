@@ -607,9 +607,8 @@ export default function FormularioTarjetaCredito({
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
         />
         <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-          ℹ️ El total de la compra NO se sumará a los gastos de este mes. Solo
-          se sumarán las cuotas en sus meses correspondientes según el cierre de
-          la tarjeta.
+          ℹ️ El total de la compra se sumará al Total consumido (letras azules
+          en el total de gastos) según el cierre de la tarjeta.
         </p>
       </div>
 
